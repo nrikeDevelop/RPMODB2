@@ -3,15 +3,11 @@ package com.odb.susy.rpmodb2;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.ListViewCompat;
-import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,29 +16,113 @@ import com.github.pires.obd.commands.protocol.EchoOffCommand;
 import com.github.pires.obd.commands.protocol.LineFeedOffCommand;
 import com.github.pires.obd.commands.protocol.SelectProtocolCommand;
 import com.github.pires.obd.commands.protocol.TimeoutCommand;
-import com.github.pires.obd.commands.temperature.AmbientAirTemperatureCommand;
 import com.github.pires.obd.enums.ObdProtocols;
 
-import org.w3c.dom.Text;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final String ODB_ADDRESS = "00:1D:A5:68:98:8C";
+    private final String UUID_STRING = "00001101-0000-1000-8000-00805F9B34FB";
+    private final int TIME_RECIVE_COMAND = 10;
+
+    BluetoothSocket socket;
+    BluetoothAdapter bluetoothAdapter;
+    BluetoothDevice device;
+
+    TextView rpmText;
+
+    public void setUI(){
+        rpmText = (TextView) findViewById(R.id.main_rpm_text);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setUI();
 
-        getDeviceList();
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                connect();
+            }
+        },500);
 
+        rpmText.setText("Connecting...");
+    }
+
+    public void setTextView(final TextView textView, final String str){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textView.setText(str);
+            }
+        });
+    }
+
+
+
+    public void connect(){
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        device = bluetoothAdapter.getRemoteDevice(ODB_ADDRESS);
+        UUID uuid = UUID.fromString(UUID_STRING);
+
+
+        try {
+            socket  = device.createInsecureRfcommSocketToServiceRecord(uuid);
+            socket.connect();
+            protocolsODB2();
+
+            RPMCommand rpmcommand = new RPMCommand();
+
+            while (!Thread.currentThread().isInterrupted())
+            {
+                rpmcommand.run(socket.getInputStream(), socket.getOutputStream());
+                // TODO handle commands result
+                String stringRPM = rpmcommand.getFormattedResult();
+                System.out.println(">>"+rpmcommand.getFormattedResult());
+                setTextView(rpmText,stringRPM);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error in method connect", Toast.LENGTH_SHORT).show();
+            rpmText.setText("Error");
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error in method interrupt connect", Toast.LENGTH_SHORT).show();
+            rpmText.setText("Error");
+
+
+        }
 
     }
 
+
+    //CONNECTION ODB2
+    private void protocolsODB2(){
+        try{
+            new EchoOffCommand().run(socket.getInputStream(), socket.getOutputStream());
+            new LineFeedOffCommand().run(socket.getInputStream(), socket.getOutputStream());
+            new TimeoutCommand(TIME_RECIVE_COMAND).run(socket.getInputStream(), socket.getOutputStream());
+            new SelectProtocolCommand(ObdProtocols.AUTO).run(socket.getInputStream(), socket.getOutputStream());
+        }catch (Exception e){
+            Toast.makeText(this, "Error in protocols method", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
+
+
+
+/*
 
     public void getDeviceList(){
         BluetoothAdapter mBlurAdapter= BluetoothAdapter.getDefaultAdapter();
@@ -66,10 +146,11 @@ public class MainActivity extends AppCompatActivity {
         String name="";
         for (BluetoothDevice devices : pairedDevices) {
 
-            /*
+
             name = name + "Device : address : " + devices.getAddress() + " name :"
-                    + devices.getName() + "\n";
-            */
+                    + devices.getName() ;
+
+            System.out.println(name);
 
             values.add(devices.getAddress());
 
@@ -85,76 +166,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+*/
 
-
-
-    BluetoothSocket socket;
-    public void connect(String string){
-
-        Button bt = (Button) findViewById(R.id.rpmButton);
-
-        BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        BluetoothDevice device = btAdapter.getRemoteDevice(string);
-
-        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
-
-        try {
-            socket  = device.createInsecureRfcommSocketToServiceRecord(uuid);
-            socket.connect();
-            Toast.makeText(this, "Ha conectado", Toast.LENGTH_SHORT).show();
-
-            try{
-                new EchoOffCommand().run(socket.getInputStream(), socket.getOutputStream());
-
-                new LineFeedOffCommand().run(socket.getInputStream(), socket.getOutputStream());
-
-                new TimeoutCommand(10).run(socket.getInputStream(), socket.getOutputStream());
-
-                new SelectProtocolCommand(ObdProtocols.AUTO).run(socket.getInputStream(), socket.getOutputStream());
-
-            }catch (Exception e){
-                Toast.makeText(this, "Error en la carga ", Toast.LENGTH_SHORT).show();
-            }
-
-            RPMCommand rpmcommand = new RPMCommand();
-
-            while (!Thread.currentThread().isInterrupted())
-            {
-                rpmcommand.run(socket.getInputStream(), socket.getOutputStream());
-               // TODO handle commands result
-
-                System.out.println(">>"+rpmcommand.getFormattedResult());
-
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error de conexion", Toast.LENGTH_SHORT).show();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error de conexion", Toast.LENGTH_SHORT).show();
-
-        }
-
-        bt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try{
-
-
-                }catch (Exception e){
-
-                }
-
-
-
-            }
-        });
-
-
-    }
 
 
 

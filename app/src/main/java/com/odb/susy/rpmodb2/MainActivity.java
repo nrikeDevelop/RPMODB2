@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -86,7 +87,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+    BluetoothSocket socket;
     public void connect(String string){
+
+        Button bt = (Button) findViewById(R.id.rpmButton);
+
         BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
 
         BluetoothDevice device = btAdapter.getRemoteDevice(string);
@@ -95,25 +101,59 @@ public class MainActivity extends AppCompatActivity {
 
 
         try {
-            BluetoothSocket socket = device.createInsecureRfcommSocketToServiceRecord(uuid);
+            socket  = device.createInsecureRfcommSocketToServiceRecord(uuid);
             socket.connect();
             Toast.makeText(this, "Ha conectado", Toast.LENGTH_SHORT).show();
 
-
             try{
-                new RPMCommand().getRPM();
+                new EchoOffCommand().run(socket.getInputStream(), socket.getOutputStream());
+
+                new LineFeedOffCommand().run(socket.getInputStream(), socket.getOutputStream());
+
+                new TimeoutCommand(10).run(socket.getInputStream(), socket.getOutputStream());
+
+                new SelectProtocolCommand(ObdProtocols.AUTO).run(socket.getInputStream(), socket.getOutputStream());
+
             }catch (Exception e){
-                System.out.println("ERROR DE RPM;");
+                Toast.makeText(this, "Error en la carga ", Toast.LENGTH_SHORT).show();
             }
 
+            RPMCommand rpmcommand = new RPMCommand();
 
+            while (!Thread.currentThread().isInterrupted())
+            {
+                rpmcommand.run(socket.getInputStream(), socket.getOutputStream());
+               // TODO handle commands result
 
+                System.out.println(">>"+rpmcommand.getFormattedResult());
 
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(this, "Error de conexion", Toast.LENGTH_SHORT).show();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error de conexion", Toast.LENGTH_SHORT).show();
+
         }
+
+        bt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try{
+
+
+                }catch (Exception e){
+
+                }
+
+
+
+            }
+        });
+
+
     }
 
 

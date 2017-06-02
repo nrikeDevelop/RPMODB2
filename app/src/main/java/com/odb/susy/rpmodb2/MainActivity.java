@@ -3,16 +3,14 @@ package com.odb.susy.rpmodb2;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.graphics.Color;
-import android.os.Handler;
+import android.graphics.Typeface;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,11 +23,13 @@ import com.github.pires.obd.commands.protocol.TimeoutCommand;
 import com.github.pires.obd.enums.ObdProtocols;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
+
+    int MAX_RPM = 2000 ;
+
+    Context context;
 
     BluetoothAdapter btAdapter;
     BluetoothDevice device;
@@ -38,11 +38,22 @@ public class MainActivity extends AppCompatActivity {
 
     RelativeLayout contentColor;
     RelativeLayout outRPM;
-    TextView rpmText;
+    TextView labelGetRPMtext;
+    TextView labelRPM;
+
     public void setUI(){
         contentColor = (RelativeLayout) findViewById(R.id.main_content_color);
         outRPM = (RelativeLayout) findViewById(R.id.outRPM);
-        rpmText = (TextView) findViewById(R.id.main_rpm_text);
+        labelGetRPMtext = (TextView) findViewById(R.id.main_rpm_text);
+        labelRPM = (TextView) findViewById(R.id.main_label_rpm);
+
+        setUpFonts();
+    }
+
+    public void setUpFonts(){
+        Typeface font_regular = Typeface.createFromAsset(context.getAssets(), "regular.ttf");
+        labelGetRPMtext.setTypeface(font_regular);
+        labelRPM.setTypeface(font_regular);
     }
 
 
@@ -50,21 +61,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setUI();
+        context = this;
 
+        setUI();
         //getDeviceList();
         connect();
-        rpmText.setText("Connecting...");
-    }
-
-    public void setTextView(final TextView textView, final String str){
-        runOnUiThread(new Runnable() {
+        contentColor.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void run() {
-                textView.setText(str);
+            public boolean onLongClick(View v) {
+                configurationAlertDialog();
+                return true;
             }
         });
+
     }
+
+    //CONNECTION ODB2
 
     public void connect(){
 
@@ -86,14 +98,12 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(this, "Error in method connect", Toast.LENGTH_SHORT).show();
-            rpmText.setText("Error");
+            labelGetRPMtext.setText("Error");
 
         }
 
     }
 
-
-    //CONNECTION ODB2
     private boolean protocolsODB2(){
         try {
             new EchoOffCommand().run(socket.getInputStream(), socket.getOutputStream());
@@ -129,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     int rpm = engineRpmCommand.getRPM();
                     System.out.println(rpm);
-                    setTextView(rpmText,String.valueOf(rpm));
+                    setTextView(labelGetRPMtext,String.valueOf(rpm));
                     bacgroundColor(rpm);
 
                 }
@@ -138,11 +148,8 @@ public class MainActivity extends AppCompatActivity {
         t.start();
     }
 
-    int MAX_RPM = 2000 ;
     public void bacgroundColor(int rpm){
         int RPM = rpm;
-
-        int MAX_RPM = 2000;
         if(RPM <= MAX_RPM/2){
             setRelativeLayoutVisibilit(outRPM,false);
             setRelativeLayoutVisibilit(contentColor,true);
@@ -194,6 +201,16 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //SET OUT DATA THREADS
+
+    public void setTextView(final TextView textView, final String str){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textView.setText(str);
+            }
+        });
+    }
 
     public void setOutColor(final RelativeLayout relativeLayout, final int red, final int green, final int blue){
         runOnUiThread(new Runnable() {
@@ -216,6 +233,52 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    //ALERTDIALOG
+
+    public void configurationAlertDialog(){
+
+
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+
+        View view = getLayoutInflater().inflate( R.layout.configuration_mode, null );
+        Button btEconomic = (Button) view.findViewById(R.id.dialog_economic_button);
+        Button btNormal = (Button) view.findViewById(R.id.dialog_normal_button);
+        Button btSport = (Button) view.findViewById(R.id.dialog_sport_button);
+
+        alertDialog.setView(view);
+
+        final AlertDialog dialog = alertDialog.create();
+        dialog.show();
+
+        btEconomic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MAX_RPM = 2000;
+                Toast.makeText(context, "Revoluciones de corte " + MAX_RPM, Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+
+        btNormal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MAX_RPM = 3000;
+                Toast.makeText(context, "Revoluciones de corte " + MAX_RPM, Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+
+        btSport.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MAX_RPM = 5000;
+                Toast.makeText(context, "Revoluciones de corte " + MAX_RPM, Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+
     }
 
 

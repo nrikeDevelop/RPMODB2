@@ -8,24 +8,60 @@
     tools:context="com.odb.susy.rpmodb2.MainActivity"
     android:gravity="center">
 
+   <!-- REVOLUTION COLOR-->
    <RelativeLayout
        android:id="@+id/main_content_color"
        android:layout_width="match_parent"
        android:layout_height="match_parent"
        android:gravity="center"/>
 
+   <!-- REVOLUTION MAX COLOR-->
    <RelativeLayout
        android:id="@+id/outRPM"
        android:layout_width="match_parent"
        android:layout_height="match_parent"/>
 
-   <TextView
-       android:id="@+id/main_rpm_text"
-       android:layout_width="match_parent"
-       android:layout_height="match_parent"
-       android:text="RPM"
-       android:gravity="center"
-       android:textSize="30dp"/>
+
+
+   <!-- REVOLUTIONS -->
+   <RelativeLayout
+       android:layout_width="350dp"
+       android:layout_height="150dp"
+       android:layout_alignParentBottom="true"
+       android:layout_alignParentLeft="true"
+       android:layout_alignParentStart="true"
+       android:background="@drawable/shape_rev">
+
+      <TextView
+          android:id="@+id/main_rpm_text"
+          android:layout_width="220dp"
+          android:layout_height="wrap_content"
+          android:text="3456"
+          android:gravity="center"
+          android:textSize="75sp"
+          android:layout_alignParentBottom="true"
+          android:layout_alignParentLeft="true"
+          android:layout_alignParentStart="true"
+          android:layout_marginStart="20dp"
+          android:layout_marginLeft="20dp"
+          android:layout_marginBottom="25dp"/>
+
+      <TextView
+          android:id="@+id/main_label_rpm"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="rpm"
+          android:textSize="40sp"
+          android:layout_alignParentBottom="true"
+          android:layout_toRightOf="@+id/main_rpm_text"
+          android:layout_toEndOf="@+id/main_rpm_text"
+
+          android:layout_marginBottom="30dp"/>
+
+   </RelativeLayout>
+
+
+
 
 
 

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">RPModb2</string>
+    <string name="mode_description">Elige el modo de conducción deseado</string>
+    <string name="mode_light">Económico</string>
+    <string name="mode_normal">Normal</string>
+    <string name="mode_sport">Sport</string>
 </resources>

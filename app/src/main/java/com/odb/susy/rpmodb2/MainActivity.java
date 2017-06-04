@@ -25,9 +25,11 @@ import com.github.pires.obd.enums.ObdProtocols;
 import java.io.IOException;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MainView {
 
     int MAX_RPM = 2000 ;
+
+    MainPresenter mainPresenter;
 
     Context context;
 
@@ -62,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this;
+
+        mainPresenter = new MainPresenter(this,context);
 
         setUI();
         //getDeviceList();
@@ -322,5 +326,10 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void showToastMessage(String string) {
+        Toast.makeText(context, string, Toast.LENGTH_SHORT).show();
     }
 }

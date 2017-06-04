@@ -8,4 +8,6 @@ public interface MainView {
 
     void showToastMessage ( String string );
 
+    void RPM ( int rpm );
+
 }

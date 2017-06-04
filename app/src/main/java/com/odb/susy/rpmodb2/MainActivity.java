@@ -192,12 +192,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             outRevTrhead.start();
-
-
-
-
         }
-
 
     }
 
